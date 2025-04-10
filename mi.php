@@ -53,22 +53,26 @@ if (isset($_POST['edit_item'])) {
     $quantity = $_POST['quantity'];
     $active = isset($_POST['active']) ? 1 : 0;
     
-    $query = "UPDATE items SET itemstype_id = ?, manufacturer = ?, name = ?, description = ?, unittype_id = ?, quantity = ?, active = ?, id = ?";
-    $params = [$itemstype_id, $manufacturer, $name, $description, $unittype_id, $quantity, $active, $id];
-    $types = "issssiii";
+    $query = "UPDATE items SET itemstype_id = ?, manufacturer = ?, name = ?, description = ?, unittype_id = ?, quantity = ?, active = ?";
+    $params = [$itemstype_id, $manufacturer, $name, $description, $unittype_id, $quantity, $active];
+    $types = "issssii";
     
     if (!empty($_FILES['picture']['name'])) {
         $upload_dir = '/home/tdawggcat/public_html/bt/images/';
         $ext = pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION);
         $picture = 'item_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['picture']['tmp_name'], $upload_dir . $picture)) {
-            $query = "UPDATE items SET itemstype_id = ?, manufacturer = ?, name = ?, description = ?, unittype_id = ?, quantity = ?, active = ?, picture = ?, id = ?";
-            $params = [$itemstype_id, $manufacturer, $name, $description, $unittype_id, $quantity, $active, $picture, $id];
-            $types = "issssiiisi";
+            $query .= ", picture = ?";
+            $params[] = $picture;
+            $types .= "s";
         } else {
             $error = "Failed to upload new picture.";
         }
     }
+    
+    $query .= " WHERE id = ?";
+    $params[] = $id;
+    $types .= "i";
     
     if (!isset($error)) {
         $stmt = $conn->prepare($query);
