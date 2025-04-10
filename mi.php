@@ -163,4 +163,96 @@ if ($user === false || !$user['is_admin']) {
         if ($result->num_rows > 0) {
             echo "<table style='border-collapse:collapse;padding:2px;margin:0;'>";
             echo "<tr style='background-color:#e0e0e0;'>
-                    <th style='border:1px solid black;padding:2px;text
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Picture</th>
+                    <th style='border:1px solid black;padding:2px;text-align:right;'>ID</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Type</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Manufacturer</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Name</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Description</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Unit Type</th>
+                    <th style='border:1px solid black;padding:2px;text-align:right;'>Qty</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Active</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Action</th>
+                  </tr>";
+            while ($row = $result->fetch_assoc()) {
+                $pic = $row['picture'] ? "<img src='/bt/images/{$row['picture']}' style='max-width:50px;'>" : "";
+                $desc = substr($row['description'] ?? '', 0, 50) . (strlen($row['description'] ?? '') > 50 ? '...' : '');
+                $active = $row['active'] ? 'Yes' : 'No';
+                echo "<tr>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>$pic</td>
+                    <td style='border:1px solid black;padding:2px;text-align:right;'>{$row['id']}</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>{$row['type']}</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>{$row['manufacturer']}</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>{$row['name']}</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>$desc</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>{$row['unittype']}</td>
+                    <td style='border:1px solid black;padding:2px;text-align:right;'>{$row['quantity']}</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'>$active</td>
+                    <td style='border:1px solid black;padding:2px;text-align:left;'><a href='mi.php?edit={$row['id']}'>Edit</a></td>
+                </tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p>No items found.</p>";
+        }
+        
+        if (isset($_GET['edit'])) {
+            $edit_id = $_GET['edit'];
+            $stmt = $conn->prepare("SELECT itemstype_id, manufacturer, name, description, picture, unittype_id, quantity, active 
+                                   FROM items WHERE id = ?");
+            $stmt->bind_param("i", $edit_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $item = $result->fetch_assoc();
+            $stmt->close();
+            if ($item) {
+                ?>
+                <h2>Edit Item (ID: <?php echo $edit_id; ?>)</h2>
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="id" value="<?php echo $edit_id; ?>">
+                    <table style="border:0;padding:2px;margin:0;">
+                        <tr><td style="padding:2px;">Type:</td><td style="padding:2px;">
+                            <select name="itemstype_id" required>
+                                <?php
+                                $result = $conn->query("SELECT id, type FROM itemtypes WHERE active = 1 ORDER BY sort");
+                                while ($row = $result->fetch_assoc()) {
+                                    $selected = $row['id'] == $item['itemstype_id'] ? 'selected' : '';
+                                    echo "<option value='{$row['id']}' $selected>{$row['type']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </td></tr>
+                        <tr><td style="padding:2px;">Manufacturer:</td><td style="padding:2px;"><input type="text" name="manufacturer" value="<?php echo htmlspecialchars($item['manufacturer'] ?? ''); ?>"></td></tr>
+                        <tr><td style="padding:2px;">Name:</td><td style="padding:2px;"><input type="text" name="name" value="<?php echo htmlspecialchars($item['name']); ?>" required></td></tr>
+                        <tr><td style="padding:2px;">Description:</td><td style="padding:2px;"><textarea name="description"><?php echo htmlspecialchars($item['description'] ?? ''); ?></textarea></td></tr>
+                        <tr><td style="padding:2px;">Unit Type:</td><td style="padding:2px;">
+                            <select name="unittype_id" required>
+                                <?php
+                                $result = $conn->query("SELECT id, unittype FROM unittypes WHERE active = 1 ORDER BY unittype");
+                                while ($row = $result->fetch_assoc()) {
+                                    $selected = $row['id'] == $item['unittype_id'] ? 'selected' : '';
+                                    echo "<option value='{$row['id']}' $selected>{$row['unittype']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </td></tr>
+                        <tr><td style="padding:2px;">Qty:</td><td style="padding:2px;"><input type="number" name="quantity" value="<?php echo htmlspecialchars($item['quantity']); ?>" min="0" required></td></tr>
+                        <tr><td style="padding:2px;">Active:</td><td style="padding:2px;"><input type="checkbox" name="active" <?php echo $item['active'] ? 'checked' : ''; ?>></td></tr>
+                        <tr><td style="padding:2px;">Picture:</td><td style="padding:2px;">
+                            <?php if ($item['picture']) echo "<img src='/bt/images/{$item['picture']}' style='max-width:50px;'>"; ?>
+                            <input type="file" name="picture">
+                        </td></tr>
+                    </table>
+                    <input type="submit" name="edit_item" value="Update Item">
+                </form>
+                <?php
+            }
+        }
+        ?>
+    </body>
+    </html>
+    <?php
+}
+
+$conn->close();
+?>
