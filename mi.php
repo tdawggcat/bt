@@ -1,6 +1,11 @@
 <?php
 require_once 'shared.php';
 
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Handle logout
 handle_logout($conn);
 
@@ -19,18 +24,22 @@ if (isset($_POST['add_item'])) {
         $upload_dir = '/home/tdawggcat/public_html/bt/images/';
         $ext = pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION);
         $picture = 'item_' . time() . '.' . $ext;
-        move_uploaded_file($_FILES['picture']['tmp_name'], $upload_dir . $picture);
+        if (!move_uploaded_file($_FILES['picture']['tmp_name'], $upload_dir . $picture)) {
+            $error = "Failed to upload picture.";
+        }
     }
     
-    $stmt = $conn->prepare("INSERT INTO items (itemstype_id, manufacturer, name, description, picture, unittype_id, quantity, active) 
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssiii", $itemstype_id, $manufacturer, $name, $description, $picture, $unittype_id, $quantity, $active);
-    if ($stmt->execute()) {
-        $message = "Item added successfully!";
-    } else {
-        $error = "Error adding item: " . $conn->error;
+    if (!isset($error)) {
+        $stmt = $conn->prepare("INSERT INTO items (itemstype_id, manufacturer, name, description, picture, unittype_id, quantity, active) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("issssiii", $itemstype_id, $manufacturer, $name, $description, $picture, $unittype_id, $quantity, $active);
+        if ($stmt->execute()) {
+            $message = "Item added successfully!";
+        } else {
+            $error = "Error adding item: " . $conn->error;
+        }
+        $stmt->close();
     }
-    $stmt->close();
 }
 
 // Handle edit item
@@ -52,23 +61,33 @@ if (isset($_POST['edit_item'])) {
         $upload_dir = '/home/tdawggcat/public_html/bt/images/';
         $ext = pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION);
         $picture = 'item_' . time() . '.' . $ext;
-        move_uploaded_file($_FILES['picture']['tmp_name'], $upload_dir . $picture);
-        $query .= ", picture = ?";
-        $params[] = $picture;
-        $types .= "s";
+        if (move_uploaded_file($_FILES['picture']['tmp_name'], $upload_dir . $picture)) {
+            $query .= ", picture = ?";
+            $params[] = $picture;
+            $types .= "s";
+        } else {
+            $error = "Failed to upload new picture.";
+        }
     }
+    
     $query .= " WHERE id = ?";
     $params[] = $id;
     $types .= "i";
     
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param($types, ...$params);
-    if ($stmt->execute()) {
-        $message = "Item updated successfully!";
-    } else {
-        $error = "Error updating item: " . $conn->error;
+    if (!isset($error)) {
+        $stmt = $conn->prepare($query);
+        if ($stmt === false) {
+            $error = "Prepare failed: " . $conn->error;
+        } else {
+            $stmt->bind_param($types, ...$params);
+            if ($stmt->execute()) {
+                $message = "Item updated successfully!";
+            } else {
+                $error = "Error updating item: " . $stmt->error;
+            }
+            $stmt->close();
+        }
     }
-    $stmt->close();
 }
 
 // Check login status (must be admin)
@@ -151,7 +170,7 @@ if ($user === false || !$user['is_admin']) {
                     <th style='border:1px solid black;padding:2px;text-align:left;'>Picture</th>
                     <th style='border:1px solid black;padding:2px;text-align:right;'>ID</th>
                     <th style='border:1px solid black;padding:2px;text-align:left;'>Type</th>
-                    <th style='border:1px solid black;padding:2px;text-align:left;'>Manuf</th>
+                    <th style='border:1px solid black;padding:2px;text-align:left;'>Manufacturer</th>
                     <th style='border:1px solid black;padding:2px;text-align:left;'>Name</th>
                     <th style='border:1px solid black;padding:2px;text-align:left;'>Description</th>
                     <th style='border:1px solid black;padding:2px;text-align:left;'>Unit Type</th>
