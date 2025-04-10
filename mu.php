@@ -93,82 +93,111 @@ if ($user === false || !$user['is_admin']) {
         if (isset($error)) echo "<p style='color:red;'>$error</p>"; 
         ?>
         
-        <h2>Add New User</h2>
-        <form method="post">
-            <table style="border:0;padding:2px;margin:0;">
-                <tr><td style="padding:2px;">Username:</td><td style="padding:2px;"><input type="text" name="username" required></td></tr>
-                <tr><td style="padding:2px;">First Name:</td><td style="padding:2px;"><input type="text" name="firstname" required></td></tr>
-                <tr><td style="padding:2px;">Last Name:</td><td style="padding:2px;"><input type="text" name="lastname" required></td></tr>
-                <tr><td style="padding:2px;">Email:</td><td style="padding:2px;"><input type="email" name="email" required></td></tr>
-                <tr><td style="padding:2px;">Password:</td><td style="padding:2px;"><input type="password" name="password" required></td></tr>
-                <tr><td style="padding:2px;">Active:</td><td style="padding:2px;"><input type="checkbox" name="active" checked></td></tr>
-                <tr><td style="padding:2px;">Admin:</td><td style="padding:2px;"><input type="checkbox" name="is_admin"></td></tr>
-            </table>
-            <input type="submit" name="add_user" value="Add User">
-        </form>
-        
         <h2>Users</h2>
-        <?php
-        $result = $conn->query("SELECT id, username, firstname, lastname, email, active, is_admin 
-                               FROM users ORDER BY id");
-        if ($result->num_rows > 0) {
-            echo "<table style='border-collapse:collapse;padding:2px;margin:0;'>";
-            echo "<tr style='background-color:#e0e0e0;'>
-                    <th style='border:1px solid black;padding:2px;'>ID</th>
-                    <th style='border:1px solid black;padding:2px;'>Username</th>
-                    <th style='border:1px solid black;padding:2px;'>First</th>
-                    <th style='border:1px solid black;padding:2px;'>Last</th>
-                    <th style='border:1px solid black;padding:2px;'>Email</th>
-                    <th style='border:1px solid black;padding:2px;'>Active</th>
-                    <th style='border:1px solid black;padding:2px;'>Admin</th>
-                    <th style='border:1px solid black;padding:2px;'>Action</th>
-                  </tr>";
+        <table style="border-collapse:collapse;padding:2px;margin:0;">
+            <tr style="background-color:#e0e0e0;">
+                <th style="border:1px solid black;padding:2px;text-align:left;">ID</th>
+                <th style="border:1px solid black;padding:2px;text-align:left;">Username</th>
+                <th style="border:1px solid black;padding:2px;text-align:left;">First</th>
+                <th style="border:1px solid black;padding:2px;text-align:left;">Last</th>
+                <th style="border:1px solid black;padding:2px;text-align:left;">Email</th>
+                <th style="border:1px solid black;padding:2px;text-align:center;">Active</th>
+                <th style="border:1px solid black;padding:2px;text-align:center;">Admin</th>
+                <th style="border:1px solid black;padding:2px;text-align:center;">Action</th>
+            </tr>
+            <?php
+            $result = $conn->query("SELECT id, username, firstname, lastname, email, active, is_admin 
+                                   FROM users ORDER BY id");
             while ($row = $result->fetch_assoc()) {
-                echo "<tr>
-                    <td style='border:1px solid black;padding:2px;'>{$row['id']}</td>
-                    <td style='border:1px solid black;padding:2px;'>{$row['username']}</td>
-                    <td style='border:1px solid black;padding:2px;'>{$row['firstname']}</td>
-                    <td style='border:1px solid black;padding:2px;'>{$row['lastname']}</td>
-                    <td style='border:1px solid black;padding:2px;'>{$row['email']}</td>
-                    <td style='border:1px solid black;padding:2px;'>{$row['active']}</td>
-                    <td style='border:1px solid black;padding:2px;'>{$row['is_admin']}</td>
-                    <td style='border:1px solid black;padding:2px;'><a href='mu.php?edit={$row['id']}'>Edit</a></td>
-                </tr>";
+                if (isset($_GET['edit']) && $_GET['edit'] == $row['id']) {
+                    // Edit mode for this row
+                    ?>
+                    <tr>
+                        <td style="border:1px solid black;padding:2px;text-align:left;"><?php echo $row['id']; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;">
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <input type="text" name="username" value="<?php echo htmlspecialchars($row['username']); ?>" required>
+                        </td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;">
+                            <input type="text" name="firstname" value="<?php echo htmlspecialchars($row['firstname']); ?>" required>
+                        </td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;">
+                            <input type="text" name="lastname" value="<?php echo htmlspecialchars($row['lastname']); ?>" required>
+                        </td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;">
+                            <input type="email" name="email" value="<?php echo htmlspecialchars($row['email']); ?>" required>
+                        </td>
+                        <td style="border:1px solid black;padding:2px;text-align:center;">
+                            <input type="checkbox" name="active" <?php echo $row['active'] ? 'checked' : ''; ?>>
+                        </td>
+                        <td style="border:1px solid black;padding:2px;text-align:center;">
+                            <input type="checkbox" name="is_admin" <?php echo $row['is_admin'] ? 'checked' : ''; ?>>
+                        </td>
+                        <td style="border:1px solid black;padding:2px;text-align:center;">
+                            <input type="password" name="password" placeholder="New password (optional)">
+                            <input type="submit" name="edit_user" value="Save">
+                            <a href="mu.php">Cancel</a>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php
+                } else {
+                    // Normal display row
+                    $active = $row['active'] ? 'Yes' : 'No';
+                    $is_admin = $row['is_admin'] ? 'Yes' : 'No';
+                    ?>
+                    <tr>
+                        <td style="border:1px solid black;padding:2px;text-align:left;"><?php echo $row['id']; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;"><?php echo $row['username']; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;"><?php echo $row['firstname']; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;"><?php echo $row['lastname']; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:left;"><?php echo $row['email']; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:center;"><?php echo $active; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:center;"><?php echo $is_admin; ?></td>
+                        <td style="border:1px solid black;padding:2px;text-align:center;"><a href="mu.php?edit=<?php echo $row['id']; ?>">Edit</a></td>
+                    </tr>
+                    <?php
+                }
             }
-            echo "</table>";
-        } else {
-            echo "<p>No users found.</p>";
-        }
-        
-        if (isset($_GET['edit'])) {
-            $edit_id = $_GET['edit'];
-            $stmt = $conn->prepare("SELECT username, firstname, lastname, email, active, is_admin 
-                                   FROM users WHERE id = ?");
-            $stmt->bind_param("i", $edit_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
-            $stmt->close();
-            if ($user) {
+            // Add new user row if clicked
+            if (isset($_GET['add'])) {
                 ?>
-                <h2>Edit User (ID: <?php echo $edit_id; ?>)</h2>
-                <form method="post">
-                    <input type="hidden" name="id" value="<?php echo $edit_id; ?>">
-                    <table style="border:0;padding:2px;margin:0;">
-                        <tr><td style="padding:2px;">Username:</td><td style="padding:2px;"><input type="text" name="username" value="<?php echo htmlspecialchars($user['username']); ?>" required></td></tr>
-                        <tr><td style="padding:2px;">First Name:</td><td style="padding:2px;"><input type="text" name="firstname" value="<?php echo htmlspecialchars($user['firstname']); ?>" required></td></tr>
-                        <tr><td style="padding:2px;">Last Name:</td><td style="padding:2px;"><input type="text" name="lastname" value="<?php echo htmlspecialchars($user['lastname']); ?>" required></td></tr>
-                        <tr><td style="padding:2px;">Email:</td><td style="padding:2px;"><input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required></td></tr>
-                        <tr><td style="padding:2px;">Password:</td><td style="padding:2px;"><input type="password" name="password" placeholder="Leave blank to keep unchanged"></td></tr>
-                        <tr><td style="padding:2px;">Active:</td><td style="padding:2px;"><input type="checkbox" name="active" <?php echo $user['active'] ? 'checked' : ''; ?>></td></tr>
-                        <tr><td style="padding:2px;">Admin:</td><td style="padding:2px;"><input type="checkbox" name="is_admin" <?php echo $user['is_admin'] ? 'checked' : ''; ?>></td></tr>
-                    </table>
-                    <input type="submit" name="edit_user" value="Update User">
-                </form>
+                <tr>
+                    <td style="border:1px solid black;padding:2px;text-align:left;">New</td>
+                    <td style="border:1px solid black;padding:2px;text-align:left;">
+                        <form method="post" style="display:inline;">
+                            <input type="text" name="username" required>
+                    </td>
+                    <td style="border:1px solid black;padding:2px;text-align:left;">
+                        <input type="text" name="firstname" required>
+                    </td>
+                    <td style="border:1px solid black;padding:2px;text-align:left;">
+                        <input type="text" name="lastname" required>
+                    </td>
+                    <td style="border:1px solid black;padding:2px;text-align:left;">
+                        <input type="email" name="email" required>
+                    </td>
+                    <td style="border:1px solid black;padding:2px;text-align:center;">
+                        <input type="checkbox" name="active" checked>
+                    </td>
+                    <td style="border:1px solid black;padding:2px;text-align:center;">
+                        <input type="checkbox" name="is_admin">
+                    </td>
+                    <td style="border:1px solid black;padding:2px;text-align:center;">
+                        <input type="password" name="password" required>
+                        <input type="submit" name="add_user" value="Save">
+                        <a href="mu.php">Cancel</a>
+                        </form>
+                    </td>
+                </tr>
                 <?php
             }
-        }
-        ?>
+            ?>
+        </table>
+        <?php if (!isset($_GET['add']) && !isset($_GET['edit'])) { ?>
+            <p><button onclick="window.location.href='mu.php?add=1'">Add User</button></p>
+        <?php } ?>
     </body>
     </html>
     <?php
