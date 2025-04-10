@@ -62,7 +62,6 @@ if (isset($_POST['edit_user'])) {
 // Check login status (must be admin)
 $user = check_login($conn);
 if ($user === false || !$user['is_admin']) {
-    // Login form (non-admins redirected here too)
     $error = handle_login($conn) ?? "Admin access required.";
     ?>
     <!DOCTYPE html>
@@ -73,14 +72,8 @@ if ($user === false || !$user['is_admin']) {
         <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
         <form method="post">
             <table style="border:0;padding:2px;margin:0;">
-                <tr>
-                    <td style="padding:2px;">Username:</td>
-                    <td style="padding:2px;"><input type="text" name="username" required></td>
-                </tr>
-                <tr>
-                    <td style="padding:2px;">Password:</td>
-                    <td style="padding:2px;"><input type="password" name="password" required></td>
-                </tr>
+                <tr><td style="padding:2px;">Username:</td><td style="padding:2px;"><input type="text" name="username" required></td></tr>
+                <tr><td style="padding:2px;">Password:</td><td style="padding:2px;"><input type="password" name="password" required></td></tr>
             </table>
             <input type="submit" name="login" value="Login">
         </form>
@@ -88,14 +81,13 @@ if ($user === false || !$user['is_admin']) {
     </html>
     <?php
 } else {
-    // Dashboard
     ?>
     <!DOCTYPE html>
     <html>
     <head><title>Manage Users</title></head>
     <body>
         <h1>User Management</h1>
-        <p><a href="bt.php">Main Menu</a> <span style="float:right;"><a href="mu.php?logout=1">Logout</a></span></p>
+        <p><a href="bt.php">Main Menu</a> | <a href="mu.php?logout=1">Logout</a></p>
         <?php 
         if (isset($message)) echo "<p style='color:green;'>$message</p>";
         if (isset($error)) echo "<p style='color:red;'>$error</p>"; 
@@ -120,18 +112,27 @@ if ($user === false || !$user['is_admin']) {
         $result = $conn->query("SELECT id, username, firstname, lastname, email, active, is_admin 
                                FROM users ORDER BY id");
         if ($result->num_rows > 0) {
-            echo "<table style='border:0;padding:2px;margin:0;'>
-                  <tr><th>ID</th><th>Username</th><th>First</th><th>Last</th><th>Email</th><th>Active</th><th>Admin</th><th>Action</th></tr>";
+            echo "<table style='border-collapse:collapse;padding:2px;margin:0;'>";
+            echo "<tr style='background-color:#e0e0e0;'>
+                    <th style='border:1px solid black;padding:2px;'>ID</th>
+                    <th style='border:1px solid black;padding:2px;'>Username</th>
+                    <th style='border:1px solid black;padding:2px;'>First</th>
+                    <th style='border:1px solid black;padding:2px;'>Last</th>
+                    <th style='border:1px solid black;padding:2px;'>Email</th>
+                    <th style='border:1px solid black;padding:2px;'>Active</th>
+                    <th style='border:1px solid black;padding:2px;'>Admin</th>
+                    <th style='border:1px solid black;padding:2px;'>Action</th>
+                  </tr>";
             while ($row = $result->fetch_assoc()) {
                 echo "<tr>
-                    <td style='padding:2px;'>{$row['id']}</td>
-                    <td style='padding:2px;'>{$row['username']}</td>
-                    <td style='padding:2px;'>{$row['firstname']}</td>
-                    <td style='padding:2px;'>{$row['lastname']}</td>
-                    <td style='padding:2px;'>{$row['email']}</td>
-                    <td style='padding:2px;'>{$row['active']}</td>
-                    <td style='padding:2px;'>{$row['is_admin']}</td>
-                    <td style='padding:2px;'><a href='mu.php?edit={$row['id']}'>Edit</a></td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['id']}</td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['username']}</td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['firstname']}</td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['lastname']}</td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['email']}</td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['active']}</td>
+                    <td style='border:1px solid black;padding:2px;'>{$row['is_admin']}</td>
+                    <td style='border:1px solid black;padding:2px;'><a href='mu.php?edit={$row['id']}'>Edit</a></td>
                 </tr>";
             }
             echo "</table>";
